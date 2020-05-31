@@ -1,0 +1,70 @@
+<?php
+	$min_price = $wpdb->get_var( "SELECT MIN(cast(meta_value as unsigned)) FROM $wpdb->postmeta WHERE meta_key = 'events_prices_price_min' AND meta_value IS NOT NULL AND meta_value <> 0" );
+	$max_price = $wpdb->get_var( "SELECT MAX(cast(meta_value as unsigned)) FROM $wpdb->postmeta WHERE meta_key = 'events_prices_price_max' AND meta_value IS NOT NULL AND meta_value <> 0" );
+?>
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/air-datepicker/2.2.3/css/datepicker.css" rel="stylesheet" type="text/css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/air-datepicker/2.2.3/js/datepicker.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.1/css/ion.rangeSlider.min.css"/>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.1/js/ion.rangeSlider.min.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/sumoselect.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
+	<form method="GET">
+		<div class="archive-filter">
+			<span>
+				<label>Жанры</label>
+				<div>
+					<?php
+						$terms = get_terms( array( 'taxonomy' => 'event_type', 'orderby' => 'name', 'parent' => 0 ) );
+						if( $terms && ! is_wp_error($terms) ) {
+							foreach ( $terms as $term ) {
+								echo '<input id="' . $term->slug . '" class="archive-filter-category" type="checkbox" name="afc[]" value="'.$term->slug . '"';
+								if(isset($_GET['afc'])) if(in_array($term->slug,$_GET['afc'])) echo 'checked';
+								echo '> <label for="' . $term->slug . '">' . $term->name . '</label><br>';
+							}
+						}
+					?>
+				</div>
+			</span>
+			<span>
+				<label>Дата</label>
+				<div id="archive-filter-date" data-range="true"></div>
+				<input id="afd" type="hidden" name="afd" disabled>
+			</span>
+			<span>
+				<label>Стоимость</label>
+				<div style="width: 300px;">
+					<input type="text" class="js-range-slider" name="afp" value="" 
+						data-min="<?php echo $min_price; ?>" 
+						data-max="<?php echo $max_price; ?>" 
+						data-from="<?php if(isset($_GET['afp']) ) echo explode(";", $_GET['afp'])[0]; else echo $min_price;?>" 
+						data-to="<?php if(isset($_GET['afp']) ) echo explode(";", $_GET['afp'])[1]; else echo $max_price; ?>"
+					/>
+				</div>
+			</span>
+			
+			<input id="afa" type="submit" value="Применить" disabled>
+			<input id="afr" type="submit" name="archive-filter-reset" value="Сбросить" hidden>
+		</div>
+	</form>
+	
+	<script src="<?php echo get_stylesheet_directory_uri() ?>/filter.js"></script>
+	<?php
+		if(isset($_GET['afd']) ) 
+		{
+			echo '<script>';
+			if(stristr($_GET['afd'], ';'))
+			{
+				echo "$('#archive-filter-date').datepicker().data('datepicker').selectDate(new Date('" . explode(";", $_GET['afd'])[0] . "'));";
+				echo "$('#archive-filter-date').datepicker().data('datepicker').selectDate(new Date('" . explode(";", $_GET['afd'])[1] . "'));";
+			}
+			else echo "$('#archive-filter-date').datepicker().data('datepicker').selectDate(new Date('" .$_GET['afd'] . "'));";
+			echo '$( "#afd" ).prop( "disabled", false );';
+			echo '$( "#afd" ).val("' . $_GET['afd'] . '");';
+			echo '</script>';
+			
+		}
+	?>
+	
